@@ -35,7 +35,7 @@ If you'd like to discuss coding, share ideas, or just connect, feel free to reac
 
 <div align="center">
 
-  **Thanks for visiting. Have a great day**
+ **Thanks for Visiting. Have a Great Day 😎**
 
 </div>
 
