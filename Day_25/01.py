@@ -1,64 +1,65 @@
-def read_input(file):
-    with open(file, 'r') as f:
-        data = f.read().splitlines()
-    return data
-
-# Convert lock/key schematics to height arrays
-def schematic_to_heights(schematic):
-    cols = list(zip(*schematic))  # Transpose to process columns
+def parse_schematic(lines):
+    # Get the width of the schematic
+    width = len(lines[0])
     heights = []
-    for col in cols:
-        if '#' in col:
-            height = len(col) - col[::-1].index('#') - 1  # Pin height
+
+    # For each column
+    for col in range(width):
+        # Find height by counting from appropriate direction
+        height = 0
+        # For locks (filled from top), count empty spaces from top
+        if lines[0][col] == '#':
+            for row in range(len(lines)):
+                if lines[row][col] == '#':
+                    height += 1
+            heights.append(height)
+        # For keys (filled from bottom), count filled spaces from bottom
         else:
-            height = 0
-        heights.append(height)
+            for row in range(len(lines)-1, -1, -1):
+                if lines[row][col] == '#':
+                    height += 1
+            heights.append(height)
     return heights
 
-# Check if key fits into lock without overlapping
-def fits(lock, key):
-    return all(lock[i] + key[i] <= len(lock) for i in range(len(lock)))
+def can_fit(lock_heights, key_heights):
+    # Check if any column overlaps
+    # Available space is len(schematic) - 1
+    max_height = 7  # Based on input format
+    for lock_h, key_h in zip(lock_heights, key_heights):
+        if lock_h + key_h > max_height:
+            return False
+    return True
 
-# Process the schematics and compute pairs
-def count_fitting_pairs(data):
-    schematics = []
-    current_schematic = []
-    for line in data:
-        if line == '':  # Empty line signifies new schematic
-            if current_schematic:
-                schematics.append(current_schematic)
-                current_schematic = []
-        else:
-            current_schematic.append(line)
-    if current_schematic:
-        schematics.append(current_schematic)
+def solve_lock_key_pairs(input_text):
+    # Split input into blocks separated by empty lines
+    blocks = input_text.strip().split('\n\n')
 
-    locks, keys = [], []
-    for schematic in schematics:
-        if schematic[0].count('#') == len(schematic[0]):  # Lock schematic
-            locks.append(schematic_to_heights(schematic))
-        else:  # Key schematic
-            keys.append(schematic_to_heights(schematic[::-1]))  # Flip for key
+    locks = []
+    keys = []
 
-    count = 0
+    # Parse each block
+    for block in blocks:
+        lines = block.strip().split('\n')
+        # If top row is filled, it's a lock
+        if lines[0].count('#') > 0:
+            locks.append(parse_schematic(lines))
+        # If bottom row is filled, it's a key
+        elif lines[-1].count('#') > 0:
+            keys.append(parse_schematic(lines))
+
+    # Count fitting pairs
+    fitting_pairs = 0
     for lock in locks:
         for key in keys:
-            if fits(lock, key):
-                count += 1
+            if can_fit(lock, key):
+                fitting_pairs += 1
 
-    return count
+    return fitting_pairs
 
-# Part Two: Count stars and check if enough places are visited
-def count_stars(data):
-    star_count = sum(line.count('*') for line in data)
-    return star_count >= 50
+# Read input from file
+with open('D:/AdventOFCode/Day_25/input.txt', 'r') as file:
+    input_text = file.read()
 
-if __name__ == "__main__":
-    input_data = read_input("D:/AdventOFCode/Day_25/input.txt")
-    result = count_fitting_pairs(input_data)
-    print(f"Number of fitting lock/key pairs: {result}")
-
-    if count_stars(input_data):
-        print("Enough stars collected to complete the chronicle!")
-    else:
-        print("Not enough stars collected, continue visiting places.")
+result = solve_lock_key_pairs(input_text)
+print(f"Number of unique lock/key pairs that fit: {result}")
+     
